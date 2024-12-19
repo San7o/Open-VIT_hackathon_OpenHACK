@@ -1,9 +1,9 @@
-#include "../include/block.h"
+#include "../include/block.hpp"
 
-#include "../include/datatypes.h"
-#include "../include/modules.h"
-#include "../include/mlp.h"
-#include "../include/attention.h"
+#include "../include/datatypes.hpp"
+#include "../include/modules.hpp"
+#include "../include/mlp.hpp"
+#include "../include/attention.hpp"
 
 #include <utility>
 #include <assert.h>

@@ -1,6 +1,6 @@
-#include "../include/modules.h"
+#include "../include/modules.hpp"
 
-#include "../include/datatypes.h"
+#include "../include/datatypes.hpp"
 
 #include <utility>
 #include <assert.h>
@@ -46,11 +46,14 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
     Tensor y(x_in.get_B(), x_in.get_N(), out_features);
 
     vit_float cumulate;
+    #pragma acc kernels loop independent collapse(3) copyin(x_in, A) copy(y)
     for (int i=0;i<y.get_B();++i) {
         for (int j=0;j<y.get_N();++j) {
+            #pragma acc loop independent
             for (int k=0;k<y.get_C();++k) {
                 cumulate = use_bias==true ? b.at(k) : 0;
 
+                #pragma acc loop reduction(+:cumulate)
                 for (int l=0;l<x_in.get_C();++l) {
                     cumulate += x_in.at(i,j,l) * A.at(k,l);
                 }

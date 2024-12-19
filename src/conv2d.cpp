@@ -1,6 +1,6 @@
-#include "../include/conv2d.h"
+#include "../include/conv2d.hpp"
 
-#include "../include/datatypes.h"
+#include "../include/datatypes.hpp"
 
 #include <utility>
 #include <assert.h>

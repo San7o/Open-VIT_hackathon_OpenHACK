@@ -1,8 +1,8 @@
-#include "../include/patch_embed.h"
+#include "../include/patch_embed.hpp"
 
-#include "../include/datatypes.h"
-#include "../include/modules.h"
-#include "../include/conv2d.h"
+#include "../include/datatypes.hpp"
+#include "../include/modules.hpp"
+#include "../include/conv2d.hpp"
 
 #include <utility>
 #include <assert.h>

@@ -1,5 +1,5 @@
-#include "../include/vision_transformer.h"
-#include "../include/utils.h"
+#include "../include/vision_transformer.hpp"
+#include "../include/utils.hpp"
 
 #include <iostream>
 #include <chrono>

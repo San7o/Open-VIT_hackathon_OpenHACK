@@ -1,9 +1,9 @@
-#ifdef _OPENMP
+// #ifdef _OPENMP
 #include <omp.h>
 
-#include "../include/modules.h"
+#include "../include/modules.hpp"
 
-#include "../include/datatypes.h"
+#include "../include/datatypes.hpp"
 
 #include <utility>
 #include <assert.h>
@@ -457,8 +457,8 @@ void global_pool_nlc (
     x_out = std::move(y);
 }
 
-#else
+// #else
 
-#error "Error: omp sources must be compiled with -fopenmp compiler flag!"
+// #error "Error: omp sources must be compiled with -fopenmp compiler flag!"
 
-#endif
+// #endif

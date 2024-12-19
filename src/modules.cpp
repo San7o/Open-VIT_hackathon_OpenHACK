@@ -46,7 +46,6 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
     Tensor y(x_in.get_B(), x_in.get_N(), out_features);
 
     vit_float cumulate;
-    #pragma acc kernels loop independent collapse(3) copyin(x_in, A) copy(y)
     for (int i=0;i<y.get_B();++i) {
         for (int j=0;j<y.get_N();++j) {
             #pragma acc loop independent

@@ -1,9 +1,9 @@
 #ifdef _OPENMP
 #include <omp.h>
 
-#include "../include/modules.h"
+#include "../include/modules.hpp"
 
-#include "../include/datatypes.h"
+#include "../include/datatypes.hpp"
 
 #include <utility>
 #include <assert.h>
@@ -49,7 +49,7 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
     Tensor y(x_in.get_B(), x_in.get_N(), out_features);
 
     vit_float cumulate;
-    #pragma omp parallel for collapse(3) private(cumulate) shared(y,use_bias,b,x_in,A) schedule(static)
+    #pragma acc kernels loop independent collapse(3) copyin(x_in, A) copy(y)
     for (int i=0;i<y.get_B();++i) {
         for (int j=0;j<y.get_N();++j) {
             for (int k=0;k<y.get_C();++k) {

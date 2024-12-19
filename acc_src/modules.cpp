@@ -1,4 +1,4 @@
-#ifdef _OPENMP
+// #ifdef _OPENMP
 #include <omp.h>
 
 #include "../include/modules.hpp"
@@ -49,7 +49,7 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
     Tensor y(x_in.get_B(), x_in.get_N(), out_features);
 
     vit_float cumulate;
-    #pragma acc kernels loop independent copyin(x_in, A) copy(y)
+    #pragma acc kernels loop independent copy(x_in, A, y)
     for (int i=0;i<y.get_B();++i) {
         #pragma acc loop independent
         for (int j=0;j<y.get_N();++j) {
@@ -57,7 +57,7 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
             for (int k=0;k<y.get_C();++k) {
                 cumulate = use_bias==true ? b.at(k) : 0;
 
-                #pragma acc loop reduction(+:cumulate)
+                #pragma acc loop independent reduction(+:cumulate)
                 for (int l=0;l<x_in.get_C();++l) {
                     cumulate += x_in.at(i,j,l) * A.at(k,l);
                 }

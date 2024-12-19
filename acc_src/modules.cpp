@@ -50,19 +50,21 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
 
     vit_float cumulate;
     #pragma acc kernels loop independent copy(x_in, A, y)
-    for (int i=0;i<y.get_B();++i) {
+    for (int i=0;i<y.B;++i) {
         #pragma acc loop independent
-        for (int j=0;j<y.get_N();++j) {
+        for (int j=0;j<y.N;++j) {
             #pragma acc loop independent
-            for (int k=0;k<y.get_C();++k) {
+            for (int k=0;k<y.C;++k) {
                 cumulate = use_bias==true ? b.at(k) : 0;
 
                 #pragma acc loop independent reduction(+:cumulate)
-                for (int l=0;l<x_in.get_C();++l) {
-                    cumulate += x_in.at(i,j,l) * A.at(k,l);
+                for (int l=0;l<x_in.C;++l) {
+                    cumulate += x_in.data[l + (j*x_in.C) + (i*j*x_in.C)] * A.data[l + (k*out_features)];
+                    // cumulate += x_in.at(i,j,l) * A.at(k,l);
                 }
 
-                y.set(i,j,k,cumulate);
+                y.data[k + (j*y.C) + (i*y.N*y.C)] = cumulate;
+                // y.set(i,j,k,cumulate);
             }
         }
     }

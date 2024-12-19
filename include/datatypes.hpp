@@ -43,10 +43,10 @@ public:
 
 
 class Matrix {
-private:
+// private:
+public:
     vit_size ROWS, COLS;
     vit_float* data;
-public:
     Matrix();
     Matrix(vit_size _ROWS, vit_size _COLS);
     Matrix(vit_float* _data, vit_size data_dim, vit_size _ROWS, vit_size _COLS);
@@ -75,10 +75,10 @@ public:
 
 
 class Tensor {
-private:
+public:
+// private:
     vit_size B, N, C; // We will deal with three-dimensional tensors
     vit_float* data;
-public:
     Tensor();
     Tensor(vit_size _B, vit_size _N, vit_size _C);
     Tensor(vit_float* _data, vit_size data_dim, vit_size _B, vit_size _N, vit_size _C);

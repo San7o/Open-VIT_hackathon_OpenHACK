@@ -499,7 +499,7 @@ void Tensor::copy_tensor(const Tensor& t) {
 }
 
 void Tensor::update_host() {
-    #pragma acc update host(data[0:B*N*C])
+    #pragma acc update self(data[0:B*N*C])
 }
 
 void Tensor::print() const {

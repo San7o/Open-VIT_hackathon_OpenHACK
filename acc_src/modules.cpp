@@ -1,4 +1,4 @@
-// #ifdef _OPENMP
+#ifdef _OPENMP
 #include <omp.h>
 
 #include "../include/modules.hpp"

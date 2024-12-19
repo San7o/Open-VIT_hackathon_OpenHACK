@@ -1,7 +1,7 @@
-#include "../include/attention.h"
+#include "../include/attention.hpp"
 
-#include "../include/datatypes.h"
-#include "../include/modules.h"
+#include "../include/datatypes.hpp"
+#include "../include/modules.hpp"
 
 #include <utility>
 #include <assert.h>

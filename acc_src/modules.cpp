@@ -48,27 +48,27 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
 
     Tensor y(x_in.get_B(), x_in.get_N(), out_features);
 
+    #pragma acc enter data copyin(A[0:1], x_in[0:1])
+    #pragma acc create(y[0:1])
+
     vit_float cumulate;
-    int size = A.get_ROWS() * A.get_COLS();
-    #pragma acc kernels loop independent copy(x_in, x_in.data[0:size], A.data[0:size], y)
-    for (int i=0;i<y.B;++i) {
-        #pragma acc loop independent
-        for (int j=0;j<y.N;++j) {
-            #pragma acc loop independent
-            for (int k=0;k<y.C;++k) {
-                cumulate = use_bias==true ? b.data[k] : 0;
+    #pragma acc kernels loop collapse(3)
+    for (int i=0;i<y.get_B();++i) {
+        for (int j=0;j<y.get_N();++j) {
+            for (int k=0;k<y.get_C();++k) {
+                cumulate = use_bias==true ? b.at(k) : 0;
 
                 #pragma acc loop independent reduction(+:cumulate)
-                for (int l=0;l<x_in.C;++l) {
-                    cumulate += x_in.data[l + (j*x_in.C) + (i*j*x_in.C)] * A.data[l + (k*out_features)];
-                    // cumulate += x_in.at(i,j,l) * A.at(k,l);
+                for (int l=0;l<x_in.get_C();++l) {
+                    cumulate += x_in.at(i,j,l) * A.at(k,l);
                 }
 
-                y.data[k + (j*y.C) + (i*y.N*y.C)] = cumulate;
-                // y.set(i,j,k,cumulate);
+                y.set(i,j,k,cumulate);
             }
         }
     }
+    #pragma acc exit data delete(A[0:1], x_in[0:1])
+    #pragma acc exit data copyout(y[0:1])
 
     x_out = std::move(y);
 }

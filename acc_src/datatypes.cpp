@@ -1,4 +1,4 @@
-// #ifdef _OPENMP
+#ifdef _OPENMP
 #include <omp.h>
 
 #include "../include/datatypes.hpp"
@@ -16,13 +16,15 @@
 RowVector::RowVector() {
     DIM = 0;
     data = nullptr;
+
+    #pragma acc enter data copyin(this)
 }
 
 RowVector::RowVector(vit_size _DIM) {
     DIM = _DIM;
     data = new vit_float[_DIM];
     
-    #pragma acc enter data copyin(self)
+    #pragma acc enter data copyin(this)
     #pragma acc enter data create(data[0:_DIM])
 }
 
@@ -30,7 +32,7 @@ RowVector::RowVector(vit_float* _data, vit_size data_dim) {
     DIM = data_dim;
     data = new vit_float[data_dim];
 
-    #pragma acc enter data copyin(self)
+    #pragma acc enter data copyin(this)
     #pragma acc enter data create(data[0:data_dim])
 
     #pragma acc parallel loop present(data[0:data_dim], _data[0:data_dim])
@@ -46,11 +48,12 @@ RowVector::RowVector(RowVector&& v) {
     v.DIM = 0;
     v.data = nullptr;
     
-    #pragma acc enter data copyin(self)
+    #pragma acc enter data copyin(this)
 }
 
 RowVector::~RowVector() {
-    #pragma acc exit data delete(self, sata)
+    #pragma acc exit data delete(data)
+    #pragma acc exit data delete(this)
 
     if (data != nullptr) {
         delete [] data;
@@ -159,7 +162,7 @@ Matrix::Matrix(vit_size _ROWS, vit_size _COLS) {
     ROWS = _ROWS;
     COLS = _COLS;
     data = new vit_float[_ROWS*_COLS];
-    #pragma acc enter data copyin(self)
+    #pragma acc enter data copyin(this)
     #pragma acc enter data create(data[0:_ROWS*_COLS])
 }
 
@@ -168,7 +171,7 @@ Matrix::Matrix(vit_float* _data, vit_size data_dim, vit_size _ROWS, vit_size _CO
     ROWS = _ROWS;
     COLS = _COLS;
     data = new vit_float[data_dim];
-    #pragma acc enter data copyin(self)
+    #pragma acc enter data copyin(this)
     #pragma acc enter data create(data[0:data_dim])
 
     #pragma acc parallel loop present(data[0:data_dim], _data[0:data_dim])
@@ -181,7 +184,7 @@ Matrix::Matrix(vit_float** _data, vit_size _ROWS, vit_size _COLS) {
     ROWS = _ROWS;
     COLS = _COLS;
     data = new vit_float[_ROWS*_COLS];
-    #pragma acc enter data copyin(self)
+    #pragma acc enter data copyin(this)
     #pragma acc enter data create(data[0:_ROWS*_COLS])
 
     #pragma acc parallel loop present(data[0:_ROWS*_COLS], _data[0:_ROWS * _COLS])
@@ -200,9 +203,14 @@ Matrix::Matrix(Matrix&& m) {
     m.ROWS = 0;
     m.COLS = 0;
     m.data = nullptr;
+
+    #pragma acc enter data copyin(this)
 }
 
 Matrix::~Matrix() {
+    #pragma acc exit data delete(data)
+    #pragma acc exit data delete(this)
+
     if (data != nullptr) {
         delete [] data;
     }
@@ -319,6 +327,8 @@ void Matrix::from_ifstream(std::ifstream& is) {
 Tensor::Tensor() {
     B = N = C = 0;
     data = nullptr;
+
+    #pragma acc enter data copyin(this)
 }
 
 Tensor::Tensor(vit_size _B, vit_size _N, vit_size _C) {
@@ -327,7 +337,7 @@ Tensor::Tensor(vit_size _B, vit_size _N, vit_size _C) {
     C = _C;
     data = new vit_float[_B*_N*_C];
     
-    #pragma acc enter data copyin(self)
+    #pragma acc enter data copyin(this)
     #pragma acc enter data create(data[0:_B*_N*_C])
 }
 
@@ -337,7 +347,10 @@ Tensor::Tensor(vit_float* _data, vit_size data_dim, vit_size _B, vit_size _N, vi
     N = _N;
     C = _C;
     data = new vit_float[data_dim];
-    #pragma omp parallel for shared(data_dim,data,_data) schedule(static)
+
+    #pragma acc enter data copyin(this)
+    #pragma acc enter data create(data[0:data_dim])
+    #pragma acc parallel loop present(data[0:data_dim], _data[0:data_dim])
     for (int i=0;i<data_dim;++i) {
         data[i] = _data[i];
     }
@@ -348,7 +361,10 @@ Tensor::Tensor(vit_float*** _data, vit_size _B, vit_size _N, vit_size _C) {
     N = _N;
     C = _C;
     data = new vit_float[_B*_N*_C];
-    #pragma omp parallel for collapse(3) shared(_B,_N,_C,data,_data) schedule(static)
+
+    #pragma acc enter data copyin(this)
+    #pragma acc enter data create(data[0:_B*_N*_C])
+    #pragma acc parallel loop present(data[0:_B*_N*_C], _data[0:_B*_N*_C])
     for (int b=0;b<_B;++b) {
         for (int n=0;n<_N;++n) {
             for (int c=0;c<_C;++c) {
@@ -368,9 +384,14 @@ Tensor::Tensor(Tensor&& t) {
     t.N = 0;
     t.C = 0;
     t.data = nullptr;
+
+    #pragma acc enter data copyin(this)
 }
 
 Tensor::~Tensor() {
+    #pragma acc exit data delete(data)
+    #pragma acc exit data delete(this)
+    
     if (data != nullptr) {
         delete [] data;
     }
@@ -475,6 +496,10 @@ void Tensor::copy_tensor(const Tensor& t) {
     for (int i=0;i<dim;++i) {
         this->data[i] = t.data[i];
     }
+}
+
+void Tensor::update_host() {
+    #pragma acc update host(data[0:B*N*C])
 }
 
 void Tensor::print() const {

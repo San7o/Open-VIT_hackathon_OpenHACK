@@ -97,6 +97,8 @@ public:
     void set(vit_size b, vit_size n, vit_size c, vit_float val);
     void copy_tensor(const Tensor& t);
 
+    void update_host();
+
     void print() const;
 
     void to_ofstream(std::ofstream& os) const;

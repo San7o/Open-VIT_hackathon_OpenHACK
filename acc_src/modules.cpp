@@ -1,4 +1,4 @@
-// #ifdef _OPENMP
+#ifdef _OPENMP
 #include <omp.h>
 
 #include "../include/modules.hpp"
@@ -51,7 +51,7 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
     Tensor y(x_in.get_B(), x_in.get_N(), out_features);
 
     vit_float cumulate;
-    #pragma acc enter data copyin(A[0:1], x_in[0:1], b[0:1], y, use_bias) create(cumulate)
+    #pragma acc enter data copyin(use_bias, cumulate)
 
     #pragma acc kernels loop collapse(3) independent
     for (int i=0;i<y.get_B();++i) {
@@ -72,7 +72,8 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
             }
         }
     }
-    #pragma acc exit data delete(A[0:1], x_in[0:1], b[0:1], use_bias, y, cumulate)
+
+    y.update_host();
 
     x_out = std::move(y);
 }

@@ -30,8 +30,10 @@ public:
     RowVector& operator+= (const RowVector& v);
 
     vit_size get_DIM() const;
+    #pragma acc routine seq
     vit_float at(vit_size i) const;
 
+    #pragma acc routine seq
     void set(vit_size i, vit_float val);
 
     void print() const;
@@ -62,8 +64,10 @@ public:
 
     vit_size get_ROWS() const;
     vit_size get_COLS() const;
+    #pragma acc routine seq
     vit_float at(vit_size i, vit_size j) const;
 
+    #pragma acc routine seq
     void set(vit_size i, vit_size j, vit_float val);
 
     void print() const;
@@ -92,12 +96,18 @@ public:
     Tensor operator+ (const Tensor& t) const;
     Tensor& operator+= (const Tensor& t);
 
+    #pragma acc routine seq
     vit_size get_B() const;
+    #pragma acc routine seq
     vit_size get_N() const;
+    #pragma acc routine seq
     vit_size get_C() const;
+    #pragma acc routine seq
     vit_float at(vit_size b, vit_size n, vit_size c) const;
 
+    #pragma acc routine seq
     void set(vit_size b, vit_size n, vit_size c, vit_float val);
+    #pragma acc routine seq
     void copy_tensor(const Tensor& t);
 
     void print() const;
@@ -125,10 +135,13 @@ public:
     PictureBatch& operator= (const PictureBatch& pic) = delete;
     PictureBatch& operator= (PictureBatch&& pic);
 
+    #pragma acc routine seq
     vit_size get_B() const;
+    #pragma acc routine seq
     vit_size get_C() const;
     vit_size get_H() const;
     vit_size get_W() const ;
+    #pragma acc routine seq
     vit_float at(vit_size b, vit_size c, vit_size h, vit_size w) const;
 
     void flatten_to_tensor(Tensor& t) const;

@@ -1,7 +1,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 
-#include "../include/datatypes.h"
+#include "../include/datatypes.hpp"
 
 #include <utility>
 #include <assert.h>

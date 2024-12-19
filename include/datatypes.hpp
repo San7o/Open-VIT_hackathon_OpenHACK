@@ -13,10 +13,10 @@ typedef enum { pool_token, pool_avg, pool_avgmax, pool_max } pool_type;
 
 
 class RowVector {
-private:
+// private:
+public:
     vit_size DIM;
     vit_float* data;
-public:
     RowVector();
     RowVector(vit_size _DIM);
     RowVector(vit_float* _data, vit_size data_dim);

@@ -81,7 +81,7 @@ following enhancements:
 Despite these planned improvements, the team was unable to fully
 complete this implementation.
 
-## Replicate the results
+## Reproduce the results
 
 Checkout the submission branch:
 

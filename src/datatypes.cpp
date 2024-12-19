@@ -80,6 +80,7 @@ vit_size RowVector::get_DIM() const {
     return DIM;
 }
 
+#pragma acc routine seq
 vit_float RowVector::at(vit_size i) const {
     assert(i<DIM);
     return data[i];
@@ -226,6 +227,7 @@ vit_size Matrix::get_COLS() const {
     return COLS;
 }
 
+#pragma acc routine seq
 vit_float Matrix::at(vit_size i, vit_size j) const {
     assert(i<ROWS);
     assert(j<COLS);
@@ -382,18 +384,22 @@ Tensor& Tensor::operator+= (const Tensor& t) {
     return *this;
 }
 
+#pragma acc routine seq
 vit_size Tensor::get_B() const {
     return B;
 }
 
+#pragma acc routine seq
 vit_size Tensor::get_N() const {
     return N;
 }
 
+#pragma acc routine seq
 vit_size Tensor::get_C() const {
     return C;
 }
 
+#pragma acc routine seq
 vit_float Tensor::at(vit_size b, vit_size n, vit_size c) const {
     assert(b<B);
     assert(n<N);
@@ -401,6 +407,7 @@ vit_float Tensor::at(vit_size b, vit_size n, vit_size c) const {
     return data[c + (n*C) + (b*N*C)];
 }
 
+#pragma acc routine seq
 void Tensor::set(vit_size b, vit_size n, vit_size c, vit_float val) {
     assert(b<B);
     assert(n<N);
@@ -408,6 +415,7 @@ void Tensor::set(vit_size b, vit_size n, vit_size c, vit_float val) {
     data[c + (n*C) + (b*N*C)] = val;
 }
 
+#pragma acc routine seq
 void Tensor::copy_tensor(const Tensor& t) {
     vit_size dim = t.B * t.N * t.C;
     if (this->B * this->N * this->C != dim) {

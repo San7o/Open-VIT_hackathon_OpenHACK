@@ -1,7 +1,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 
-#include "../include/datatypes.h"
+#include "../include/datatypes.hpp"
 
 #include <utility>
 #include <assert.h>
@@ -86,6 +86,7 @@ vit_size RowVector::get_DIM() const {
     return DIM;
 }
 
+#pragma acc routine seq
 vit_float RowVector::at(vit_size i) const {
     assert(i<DIM);
     return data[i];
@@ -147,6 +148,8 @@ Matrix::Matrix(vit_size _ROWS, vit_size _COLS) {
     ROWS = _ROWS;
     COLS = _COLS;
     data = new vit_float[_ROWS*_COLS];
+    #pragma acc enter data copyin(self)
+    #pragma acc enter data create(data[0:_ROWS*_COLS])
 }
 
 Matrix::Matrix(vit_float* _data, vit_size data_dim, vit_size _ROWS, vit_size _COLS) {
@@ -154,7 +157,10 @@ Matrix::Matrix(vit_float* _data, vit_size data_dim, vit_size _ROWS, vit_size _CO
     ROWS = _ROWS;
     COLS = _COLS;
     data = new vit_float[data_dim];
-    #pragma omp parallel for shared(data_dim,data,_data) schedule(static)
+    #pragma acc enter data copyin(self)
+    #pragma acc enter data create(data[0:data_dim])
+
+    #pragma acc parallel loop present(data[0:data_dim], _data[0:data_dim])
     for (int i=0;i<data_dim;++i) {
         data[i] = _data[i];
     }
@@ -164,7 +170,10 @@ Matrix::Matrix(vit_float** _data, vit_size _ROWS, vit_size _COLS) {
     ROWS = _ROWS;
     COLS = _COLS;
     data = new vit_float[_ROWS*_COLS];
-    #pragma omp parallel for collapse(2) shared(_ROWS,_COLS,data,_data) schedule(static)
+    #pragma acc enter data copyin(self)
+    #pragma acc enter data create(data[0:_ROWS*_COLS])
+
+    #pragma acc parallel loop present(data[0:_ROWS*_COLS], _data[0:_ROWS * _COLS])
     for (int i=0;i<_ROWS;++i) {
         for (int j=0;j<_COLS;++j) {
             data[j + (i*_COLS)] = _data[i][j];
@@ -236,6 +245,7 @@ vit_size Matrix::get_COLS() const {
     return COLS;
 }
 
+#pragma acc routine seq
 vit_float Matrix::at(vit_size i, vit_size j) const {
     assert(i<ROWS);
     assert(j<COLS);
@@ -384,9 +394,11 @@ Tensor Tensor::operator+ (const Tensor& t) const {
 }
 
 Tensor& Tensor::operator+= (const Tensor& t) {
+	/*
     assert(this->B == t.B);
     assert(this->N == t.N);
     assert(this->C == t.C);
+    */
 
     #pragma omp parallel for shared(B,N,C,data,t) schedule(static)
     for (int i=0;i<this->B * this->N * this->C;++i) {
@@ -396,29 +408,40 @@ Tensor& Tensor::operator+= (const Tensor& t) {
     return *this;
 }
 
+#pragma acc routine seq
 vit_size Tensor::get_B() const {
     return B;
 }
 
+#pragma acc routine seq
 vit_size Tensor::get_N() const {
     return N;
 }
 
+#pragma acc routine seq
 vit_size Tensor::get_C() const {
     return C;
 }
 
+#pragma acc routine seq
 vit_float Tensor::at(vit_size b, vit_size n, vit_size c) const {
+	/*
     assert(b<B);
     assert(n<N);
     assert(c<C);
+    */
+    if (b < B || n < N || c < C) return vit_float();
     return data[c + (n*C) + (b*N*C)];
 }
 
+#pragma acc routine seq
 void Tensor::set(vit_size b, vit_size n, vit_size c, vit_float val) {
+    /*
     assert(b<B);
     assert(n<N);
     assert(c<C);
+    */
+    if (b < B || n < N || c < C) return;
     data[c + (n*C) + (b*N*C)] = val;
 }
 

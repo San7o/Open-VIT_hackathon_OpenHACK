@@ -1,9 +1,9 @@
 #ifdef _OPENMP
 #include <omp.h>
 
-#include "../include/modules.h"
+#include "../include/modules.hpp"
 
-#include "../include/datatypes.h"
+#include "../include/datatypes.hpp"
 
 #include <utility>
 #include <assert.h>
@@ -39,9 +39,11 @@ Linear& Linear::operator= (Linear&& lin) {
 }
 
 void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
+	/*
     assert(A.get_ROWS() == out_features);
     assert(A.get_COLS() == in_features);
     assert(x_in.get_C() == in_features);
+    */
     if (use_bias == true) {
         assert(b.get_DIM() == out_features);
     }
@@ -49,20 +51,28 @@ void Linear::operator()(const Tensor& x_in, Tensor& x_out) const {
     Tensor y(x_in.get_B(), x_in.get_N(), out_features);
 
     vit_float cumulate;
-    #pragma omp parallel for collapse(3) private(cumulate) shared(y,use_bias,b,x_in,A) schedule(static)
+    #pragma acc enter data copyin(A[0:1], x_in[0:1], b[0:1], y, use_bias) create(cumulate)
+
+    #pragma acc kernels loop collapse(3) independent
     for (int i=0;i<y.get_B();++i) {
         for (int j=0;j<y.get_N();++j) {
             for (int k=0;k<y.get_C();++k) {
-                cumulate = use_bias==true ? b.at(k) : 0;
 
+	        if (i < y.get_B() || j < y.get_N() || k < y.get_C())
+                   cumulate = use_bias==true ? b.at(k) : 0;
+
+                #pragma acc loop independent reduction(+:cumulate)
                 for (int l=0;l<x_in.get_C();++l) {
-                    cumulate += x_in.at(i,j,l) * A.at(k,l);
+	            if (i < y.get_B() || j < y.get_N() || k < y.get_C() || l < x_in.get_C())
+                    	cumulate += x_in.at(i,j,l) * A.at(k,l);
                 }
 
-                y.set(i,j,k,cumulate);
+	        if (i < y.get_B() || j < y.get_N() || k < y.get_C())
+                    y.set(i,j,k,cumulate);
             }
         }
     }
+    #pragma acc exit data delete(A[0:1], x_in[0:1], b[0:1], use_bias, y, cumulate)
 
     x_out = std::move(y);
 }
@@ -151,12 +161,14 @@ void LayerNorm::operator()(Tensor& x) const {
 }
 
 void LayerNorm::operator()(Tensor& x, vit_size num_heads, vit_size head_dim) const {
+	/*
     assert(x.get_C() == head_dim*num_heads);
     assert(g.get_DIM() == head_dim);
     if (use_bias == true) {
         assert(b.get_DIM() == head_dim);
     }
 
+    */
     vit_float mean;
     vit_float var;
     vit_float st_dev;

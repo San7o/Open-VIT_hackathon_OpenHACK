@@ -1,10 +1,10 @@
 #ifdef _OPENMP
 #include <omp.h>
 
-#include "../include/attention.h"
+#include "../include/attention.hpp"
 
-#include "../include/datatypes.h"
-#include "../include/modules.h"
+#include "../include/datatypes.hpp"
+#include "../include/modules.hpp"
 
 #include <utility>
 #include <assert.h>
@@ -176,6 +176,7 @@ void Attention::multi_head_attention(
     vit_size _num_heads,
     vit_size _head_dim
 ) const {
+	/*
     assert(query.get_C() == _num_heads*_head_dim);
 
     assert(key.get_B() == query.get_B());
@@ -184,6 +185,7 @@ void Attention::multi_head_attention(
     assert(value.get_N() == query.get_N());
     assert(key.get_C() == query.get_C());
     assert(value.get_C() == query.get_C());
+    */
 
     vit_size N = query.get_N();
     Tensor qk(query.get_B(), N, N * _num_heads);

@@ -13,10 +13,9 @@ typedef enum { pool_token, pool_avg, pool_avgmax, pool_max } pool_type;
 
 
 class RowVector {
-private:
+public:
     vit_size DIM;
     vit_float* data;
-public:
     RowVector();
     RowVector(vit_size _DIM);
     RowVector(vit_float* _data, vit_size data_dim);
@@ -43,10 +42,9 @@ public:
 
 
 class Matrix {
-private:
+public:
     vit_size ROWS, COLS;
     vit_float* data;
-public:
     Matrix();
     Matrix(vit_size _ROWS, vit_size _COLS);
     Matrix(vit_float* _data, vit_size data_dim, vit_size _ROWS, vit_size _COLS);
@@ -75,10 +73,9 @@ public:
 
 
 class Tensor {
-private:
+public:
     vit_size B, N, C; // We will deal with three-dimensional tensors
     vit_float* data;
-public:
     Tensor();
     Tensor(vit_size _B, vit_size _N, vit_size _C);
     Tensor(vit_float* _data, vit_size data_dim, vit_size _B, vit_size _N, vit_size _C);
@@ -109,10 +106,9 @@ public:
 
 
 class PictureBatch {
-private:
+public:
     vit_size B, C, H, W;
     vit_float* data;
-public:
     PictureBatch();
     PictureBatch(vit_size _B, vit_size _C, vit_size _H, vit_size _W);
     PictureBatch(
@@ -145,14 +141,13 @@ public:
 
 
 class PredictionBatch {
-private:
+public:
     vit_size B;
     vit_size CLS;
 
     vit_size* classes;
     vit_float* prob;
     vit_float* prob_matrix;
-public:
     PredictionBatch();
     PredictionBatch(const Tensor& t);
     PredictionBatch(const PredictionBatch& pred) = delete;

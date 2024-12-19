@@ -1,9 +1,9 @@
 #ifdef _OPENMP
 #include <omp.h>
 
-#include "../include/conv2d.hpp"
+#include "../include/conv2d.h"
 
-#include "../include/datatypes.hpp"
+#include "../include/datatypes.h"
 
 #include <utility>
 #include <assert.h>

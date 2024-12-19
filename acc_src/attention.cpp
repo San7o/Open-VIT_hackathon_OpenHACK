@@ -1,10 +1,10 @@
 #ifdef _OPENMP
 #include <omp.h>
 
-#include "../include/attention.hpp"
+#include "../include/attention.h"
 
-#include "../include/datatypes.hpp"
-#include "../include/modules.hpp"
+#include "../include/datatypes.h"
+#include "../include/modules.h"
 
 #include <utility>
 #include <assert.h>

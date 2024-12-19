@@ -1,12 +1,12 @@
 #ifdef _OPENMP
 #include <omp.h>
 
-#include "../include/vision_transformer.hpp"
+#include "../include/vision_transformer.h"
 
-#include "../include/datatypes.hpp"
-#include "../include/modules.hpp"
-#include "../include/block.hpp"
-#include "../include/patch_embed.hpp"
+#include "../include/datatypes.h"
+#include "../include/modules.h"
+#include "../include/block.h"
+#include "../include/patch_embed.h"
 
 #include <vector>
 #include <utility>

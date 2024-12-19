@@ -1,4 +1,4 @@
-#ifdef _OPENMP
+// #ifdef _OPENMP
 #include <omp.h>
 
 #include "../include/datatypes.hpp"
@@ -21,12 +21,19 @@ RowVector::RowVector() {
 RowVector::RowVector(vit_size _DIM) {
     DIM = _DIM;
     data = new vit_float[_DIM];
+    
+    #pragma acc enter data copyin(self)
+    #pragma acc enter data create(data[0:_DIM])
 }
 
 RowVector::RowVector(vit_float* _data, vit_size data_dim) {
     DIM = data_dim;
     data = new vit_float[data_dim];
-    #pragma omp parallel for shared(data_dim,data,_data) schedule(static)
+
+    #pragma acc enter data copyin(self)
+    #pragma acc enter data create(data[0:data_dim])
+
+    #pragma acc parallel loop present(data[0:data_dim], _data[0:data_dim])
     for (int i=0;i<data_dim;++i) {
         data[i] = _data[i];
     }
@@ -38,9 +45,13 @@ RowVector::RowVector(RowVector&& v) {
 
     v.DIM = 0;
     v.data = nullptr;
+    
+    #pragma acc enter data copyin(self)
 }
 
 RowVector::~RowVector() {
+    #pragma acc exit data delete(self, sata)
+
     if (data != nullptr) {
         delete [] data;
     }
@@ -315,6 +326,9 @@ Tensor::Tensor(vit_size _B, vit_size _N, vit_size _C) {
     N = _N;
     C = _C;
     data = new vit_float[_B*_N*_C];
+    
+    #pragma acc enter data copyin(self)
+    #pragma acc enter data create(data[0:_B*_N*_C])
 }
 
 Tensor::Tensor(vit_float* _data, vit_size data_dim, vit_size _B, vit_size _N, vit_size _C) {

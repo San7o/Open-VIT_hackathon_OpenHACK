@@ -1,180 +1,99 @@
-# C++ Vision Transformer
+# Vision Transformer Submission
 
-## Project Structure
+## Summary
 
-This project contains an implementation of all the necessary components as well as a full ViT model. In particular:
-- Library headers (`include/`)
-- A single-threaded serial implementation (`src/`)
-- An OpenMP parallel implementation (`omp_src/`)
-- Some utility scripts (`scripts/`)
-- A pre-defined model to be used for weight initialization (`model/`)
-- Some datasets (`data_0/` `data_1/` `data_2/` `data_3/`)
-- Files for individual component testing (`test_src/`)
-- Scripts for easy benchmarking (`params.sh` `run_cpp.sh` `run_omp.sh` `elaborate.sh`)
+This repository contains the submission of the group OpenHACK
+for the Hackathon@School of Innovation taking place in 19/12/2024.
+The team focused their efforts on optimizing the linear transformation
+function implemented in `modules.cpp`. The results exhibit a speedup of
+33x on Attention and 51x on MLP compared to the serial implementation.
+Furthermore, this submission contains a cleaner implementation of
+the said function, however the implementation is not fully complete
+and yields runtime errors. Despte this, the team agreed to include
+this work on the submission as additional material.
 
-A **copy** of OpenMP source (`acc_src/`) that you can work on.
+## Team Members
 
-# Things to do when offload the code on Leonardo system 
+- Salvatore Andaloro
+- Leonardo Falsarolo
+- Sophie Motter
+- Giovanni Santini
 
-## Load the NVHPC compiler, compile your code with: 
+## Submission
+
+The improved algorithm can be found in the `submission` branche,
+inside the  [acc_src/modules.cpp](./acc_src/modules.cpp) file
+in the function `Linear::operator()(const Tensor&, Tensto&)` line 41.
+The loops are accelerated using OpenACC pragmas, we highlight 4 notable
+considerations:
+1. Memory needs to be copied in and out of the device before and after the
+   parallel section. This can be achieved using the `copy()` keyword.
+   However, not all C++ lasses are trivially copyable. For example, If
+   a class contains a pointer to another class or array, this too would
+   need to be copied in the device memory. For this reason, our implementation
+   includes the inner data of the classes in the `copy()` keyword to perform
+   a deep copy. A more elegant implementation is proposed later.
+2. The loops needed to be explicitly marked as independent, otherwise
+   the compile would not automatically parallelize the for loops.
+3. The most inner loop can be accelerated using a reduction operation,
+   levereging the `reduction(+:cumulate)` keyword.
+4. Most methods cannot be called from the device unless manually configured.
+   This implementation removes the calls to the Tensor's methods. A more
+   maintainable solution is explained later.
+
+Overall, the improved algorithm takes an average foreward time per batch 
+of 0.000294755 s with 0.0338206 s in Attention and 0.035154 s in MLP
+using the `data_2` dataset, with an increase of 33x and 51x respectively
+compared to the serial implementation.
+
+To address the problems in `1.` and `2.`, we propose a second implementation
+in the `master` branch implementing the following changes:
+1. Instead of copying the classes and their inner attributes (such as arrays
+   or pointer to other structs) before the algorithm with the `copy()` keyword,
+   we allocate and deallocate the device memory based on the lifetime
+   of the object. To synchronyze the cpu and gpu data, a new method
+   called `update_host` that will update all the memory using `#pragma acc update`.
+2. The methods are marked with `#pragma acc routine seq`, making them
+   callable from the GPU, making the algorithms easier to write.
+
+However, the team did not mange to complete this last implementation.
+
+## Replicate the results
+
+Checkout the submission branch:
+
+```bash
+git checkout submission
 ```
-module load nvhpc/24.3
-make -f makefile.acc acc_bin/vit.exe
+
+Load the necessary modules and compile the executable:
+
+```bash
+module load nvhpc/24.3 &&
+srun -N 1 -p boost_usr_prod \
+          -A tra24_hckunitn  \
+          --reservation=s_tra_hckunitn \
+          -t 00:05:00 \
+          --gres=gpu:1 \
+          make -f makefile.acc acc_bin/vit.exe
 ```
 
-## After compiling code: run and analysis with nsight system
+setup python venv:
 
-## Setup Python venv
-```
-python3 -m venv .venv
-source .venv/bin/activate
+```bash
+python3 -m venv .venv &&
+source .venv/bin/activate &&
 pip install numpy
 ```
 
-### Having trouble running scripts?
-Make sure they are executable
+run and profile the code:
 
-```
-chmod +x <your_script>
-```
-
-## To run the code and nsys profile:
-IMPORTANT: you shall not run these commands directly.
-
-```
-- Serial:  ./run_cpp_nsys.sh --profile 
-- Openmp:  ./run_omp_nsys.sh --profile
-- Openacc: ./run_acc_nsys.sh --profile
-```
-
-To run properly, you must first request resources via SLURM. There are two ways to do so:
-```
-# "Inline"
-srun -N 1 -p boost_usr_prod -A tra24_hckunitn  --reservation=s_tra_hckunitn -t 00:05:00 --gres=gpu:1 <your_command_here>
-
-# "Batch script"
-sbatch slurm_script.slurm
-```
-In the second case, stdout and err are saved to files. Look at the script.
-
-## Download NVIDIA Nsight Systems on your preferred laptop:
-
-[Click here](https://developer.nvidia.com/nsight-systems/get-started)
-
-## Download the report on your local system 
-```
-./down.sh <account> <sys> <path> [exclude]
-or
-./down.sh -h
-```
-
-## How to Compile (Serial and OpenMP)
-
-C++ single-threaded serial implementation:
-```
-make bin/vit.exe
-```
-
-OpenMP parallel implementation:
-```
-make omp_bin/vit.exe
-```
-
-Clean the folder from all compiled file:
-```
-make clean
-```
-
-## How to Run Locally
-
-C++ single-threaded serial implementation:
-```
-./bin/vit.exe <model.cvit> <in_file.cpic> <out_file.cprd> <measures_file.csv>
-```
-
-OpenMP parallel implementation:
-```
-export OMP_NUM_THREADS=<num_threads>
-./omp_bin/vit.exe <model.cvit> <in_file.cpic> <out_file.cprd> <measures_file.csv>
-```
-
-Example:
-```
-./bin/vit.exe model/vit.cvit data_0/pic_0.cpic out/prd_0.cprd measures/cpp.csv
-export OMP_NUM_THREADS=16
-./omp_bin/vit.exe model/vit.cvit data_0/pic_0.cpic omp_out/prd_0.cprd measures/omp_16.csv
-```
-
-You can use two scripts to easily automate this process (they both rely on `params.sh`):
-```
-# Edit params.sh
-bash run_cpp.sh
-bash run_omp.sh
-```
-
-## Performance Analysis
-
-When the model run, they automatically create output labes as well as measure files.
-
-If you used `bash run_cpp.sh` you will already find a `cpp_summary.txt` file in the measure folder, same for `bash run_omp.sh`.
-
-Otherwise you can manually compute it with:
-```
-python3 scripts/analyze_time_measures.py <measure_file.csv> <out_file.txt>
-```
-
-## Output Comparison
-
-Compare two prediction files:
-```
-python3 scripts/compare_cpred.py <prediction_a.cprd> <prediction_b.cprd> <out_file.txt> <high_treshold> <low_treshold>
-```
-
-These comparisons have a section for each batch, so for large datasets you may want to summarize them in a shorter file:
-```
-python3 scripts/summary_cpred_comparison.py <comparison_file.txt> <summarized_file.txt>
-```
-
-If you used `bash run_cpp.sh` and `bash run_cpp.sh`, you can run another script to automatically generate the comparisons and summarize them
-in the `out_comparison/` folder:
-```
-# It relies as well on params.sh
-bash elaborate.sh
-```
-
-# Other Useful Scripts
-
-Plot an input batch file:
-```
-python3 scripts/plot_cpic.py <batch_file.cpic>
-```
-
-Plot an output prediction file:
-```
-python3 scripts/plot_prediction.py <prediction_file.cprd>
-```
-
-Create an input batch of a random quantity pictures, each one composed by random pixels:
-```
-python3 scripts/random_cpic <out_file.cpic> <min_batch_dim> <max_batch_dim> <num_channels> <picture_height> <picture_width> <min_pixel_val> <max_pixel_val>
-```
-
-Generate the lines of code to insert a random value tensor in your test file:
-```
-python3 scripts/create_tensor.py <dim_0> <optional_dim_1> <optional_dim_2> <optional_dim_3>
-```
-
-## Unit Tests
-
-To run an individual component test, first modify the proper file in `test_src/test_<module_name>.cpp`.
-
-Where `<module_name>` can be: `datatypes`, `modules`, `mlp`, `conv2d`, `attention`, `block`, `patch_embed`, `vision_transformer` and `utils`.
-
-Then compile it:
-```
-make test_bin/test_<module_name>.exe
-```
-And run it:
-```
-test_bin/test_<module_name>.exe
+```bash
+chmod +x run_acc.sh &&
+srun -N 1 -p boost_usr_prod \
+          -A tra24_hckunitn  \
+          --reservation=s_tra_hckunitn \
+          -t 00:05:00 \
+          --gres=gpu:1 \
+          ./run_acc.sh --profile
 ```

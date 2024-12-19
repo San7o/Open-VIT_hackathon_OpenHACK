@@ -1,6 +1,6 @@
-#include "../include/utils.h"
+#include "../include/utils.hpp"
 
-#include "../include/vision_transformer.h"
+#include "../include/vision_transformer.hpp"
 
 #include <iostream>
 #include <fstream>

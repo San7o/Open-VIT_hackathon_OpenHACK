@@ -17,7 +17,7 @@ RowVector::RowVector() {
     DIM = 0;
     data = nullptr;
 
-    #pragma acc enter data copyin(this)
+    #pragma acc enter data copyin(this[:0])
 }
 
 RowVector::RowVector(vit_size _DIM) {
@@ -156,6 +156,7 @@ void RowVector::from_ifstream(std::ifstream& is) {
 Matrix::Matrix() {
     ROWS = COLS = 0;
     data = nullptr;
+    #pragma acc enter data copyin(this)
 }
 
 Matrix::Matrix(vit_size _ROWS, vit_size _COLS) {
